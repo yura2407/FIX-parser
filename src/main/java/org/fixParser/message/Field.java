@@ -6,7 +6,7 @@ public class Field {
     private final short id;
     private final int offset;
 
-    public Field(String name, Type type, short id, int offset) {
+    public Field(String name, SimpleType type, short id, int offset) {
         this.name = name;
         this.type = type;
         this.id = id;

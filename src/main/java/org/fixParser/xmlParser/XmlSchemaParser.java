@@ -1,9 +1,6 @@
 package org.fixParser.xmlParser;
 
-import org.fixParser.message.CompositeType;
-import org.fixParser.message.EnumType;
-import org.fixParser.message.Message;
-import org.fixParser.message.Type;
+import org.fixParser.message.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -13,26 +10,22 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.InputStream;
 import java.util.Map;
 
 public class XmlSchemaParser {
-    private Type[] types;
     private EnumType[] enums;
     private CompositeType[] composites;
     private Message[] messages;
 
-    public void parse(String filePath){
-        try{
-            File file = new File(filePath);
+    public Document parse(String schemaPath){
+        try (InputStream fileInput = this.getClass().getClassLoader().getResourceAsStream(schemaPath)){
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(file);
+            Document doc = dBuilder.parse(fileInput);
             doc.getDocumentElement().normalize();
-            parseTypes(doc);
+            return doc;
         } catch (ParserConfigurationException | SAXException e) {
             System.out.println("Error parsing XML file");
             throw new RuntimeException(e);
@@ -42,20 +35,51 @@ public class XmlSchemaParser {
         }
     }
 
-    private void parseTypes(Document doc){
+    public void parseSimpleTypes(Document doc, Map<String, Type> types){
         NodeList typeList = doc.getElementsByTagName("type");
-        types = new Type[typeList.getLength()];
         for (int i = 0; i < typeList.getLength(); i++) {
             Node node = typeList.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element element = (Element) node;
-                Type type = new Type.Builder()
-                        .name(element.getAttribute("name"))
-                        .primitiveType(element.getAttribute("primitiveType"))
-                        .isOptional(!element.getAttribute("presence").isEmpty())
-                        .build();
-                types[i] = type;
+                SimpleType type = new SimpleType(
+                        element.getAttribute("name"),
+                        element.getAttribute("primitiveType"),
+                        !element.getAttribute("presence").isEmpty(),
+                        element.getAttribute("length")
+                );
+                types.put(type.getName(), type);
             }
         }
     }
+
+//    public CompositeType[] parseCompositeTypes(Document doc){
+//        NodeList typeList = doc.getElementsByTagName("composite");
+//        CompositeType[] types = new CompositeType[typeList.getLength()];
+//        for (int i = 0; i < typeList.getLength(); i++) {
+//            Node node = typeList.item(i);
+//            if (node.getNodeType() == Node.ELEMENT_NODE) {
+//                Element element = (Element) node;
+//                String name = element.getAttribute("name");
+//                NodeList fieldList = element.getElementsByTagName("field");
+//                SimpleType[] fields = new SimpleType[fieldList.getLength()];
+//                for (int j = 0; j < fieldList.getLength(); j++) {
+//                    Node fieldNode = fieldList.item(j);
+//                    if (fieldNode.getNodeType() == Node.ELEMENT_NODE) {
+//                        Element fieldElement = (Element) fieldNode;
+//                        SimpleType field = new SimpleType.Builder()
+//                                .name(fieldElement.getAttribute("name"))
+//                                .primitiveType(fieldElement.getAttribute("primitiveType"))
+//                                .isOptional(!fieldElement.getAttribute("presence").isEmpty())
+//                                .length(fieldElement.getAttribute("length"))
+//                                .build();
+//                        fields[j] = field;
+//                    }
+//                }
+//                CompositeType type = new CompositeType(name, fields);
+//                types[i] = type;
+//            }
+//        }
+//        return types;
+//    }
+
 }
