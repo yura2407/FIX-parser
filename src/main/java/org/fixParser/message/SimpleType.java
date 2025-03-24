@@ -1,6 +1,7 @@
 package org.fixParser.message;
 
 public class SimpleType implements Type {
+    //TODO: Overwrite hashCode and equals for tests
     private final String name;
     private final PrimitiveType primitiveType;
     private final boolean optional;

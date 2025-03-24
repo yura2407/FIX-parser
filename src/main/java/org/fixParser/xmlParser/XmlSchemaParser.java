@@ -12,7 +12,10 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public class XmlSchemaParser {
     private EnumType[] enums;
@@ -52,34 +55,47 @@ public class XmlSchemaParser {
         }
     }
 
-//    public CompositeType[] parseCompositeTypes(Document doc){
-//        NodeList typeList = doc.getElementsByTagName("composite");
-//        CompositeType[] types = new CompositeType[typeList.getLength()];
-//        for (int i = 0; i < typeList.getLength(); i++) {
-//            Node node = typeList.item(i);
-//            if (node.getNodeType() == Node.ELEMENT_NODE) {
-//                Element element = (Element) node;
-//                String name = element.getAttribute("name");
-//                NodeList fieldList = element.getElementsByTagName("field");
-//                SimpleType[] fields = new SimpleType[fieldList.getLength()];
-//                for (int j = 0; j < fieldList.getLength(); j++) {
-//                    Node fieldNode = fieldList.item(j);
-//                    if (fieldNode.getNodeType() == Node.ELEMENT_NODE) {
-//                        Element fieldElement = (Element) fieldNode;
-//                        SimpleType field = new SimpleType.Builder()
-//                                .name(fieldElement.getAttribute("name"))
-//                                .primitiveType(fieldElement.getAttribute("primitiveType"))
-//                                .isOptional(!fieldElement.getAttribute("presence").isEmpty())
-//                                .length(fieldElement.getAttribute("length"))
-//                                .build();
-//                        fields[j] = field;
-//                    }
-//                }
-//                CompositeType type = new CompositeType(name, fields);
-//                types[i] = type;
-//            }
-//        }
-//        return types;
-//    }
+    public void parseCompositeTypes(Document doc, Map<String, Type> types){
+        NodeList typeList = doc.getElementsByTagName("composite");
+        for (int i = 0; i < typeList.getLength(); i++) {
+            Node node = typeList.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                String name = element.getAttribute("name");
+                NodeList nestedTypesList = element.getElementsByTagName("type");
+                Type[] nestedTypes = new SimpleType[nestedTypesList.getLength()];
+                for (int j = 0; j < nestedTypesList.getLength(); j++) {
+                    Node nestedType = nestedTypesList.item(j);
+                    if (nestedType.getNodeType() == Node.ELEMENT_NODE) {
+                        Element fieldElement = (Element) nestedType;
+                        nestedTypes[j] = types.get(fieldElement.getAttribute("name"));
+                    }
+                }
+                CompositeType type = new CompositeType(name, nestedTypes);
+                types.put(type.getName(), type);
+            }
+        }
+    }
 
+    public void parseEnumTypes(Document doc, Map<String, Type> types){
+        NodeList enumsList = doc.getElementsByTagName("enum");
+        for (int i = 0; i < enumsList.getLength(); i++) {
+            Node node = enumsList.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element element = (Element) node;
+                String name = element.getAttribute("name");
+                NodeList valueList = element.getElementsByTagName("validValue");
+                Set<Character> validValues = new HashSet<>();
+                for (int j = 0; j < valueList.getLength(); j++) {
+                    Node valueNode = valueList.item(j);
+                    if (valueNode.getNodeType() == Node.ELEMENT_NODE) {
+                        Element valueElement = (Element) valueNode;
+                        validValues.add(valueElement.getTextContent().charAt(0));
+                    }
+                }
+                EnumType type = new EnumType(name, validValues);
+                types.put(type.getName(), type);
+            }
+        }
+    }
 }

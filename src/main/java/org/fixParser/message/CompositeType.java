@@ -1,12 +1,14 @@
 package org.fixParser.message;
 
 public class CompositeType implements Type {
-    private final String name;
-    private final SimpleType[] types;
 
-    public CompositeType(String name, SimpleType[] types) {
+    //TODO: Overwrite hashCode and equals for tests
+    private final String name;
+    private final Type[] nestedTypes;
+
+    public CompositeType(String name, Type[] nestedTypes) {
         this.name = name;
-        this.types = types;
+        this.nestedTypes = nestedTypes;
     }
 
     @Override

@@ -1,13 +1,16 @@
 package org.fixParser.message;
 
 import java.util.Map;
+import java.util.Set;
 
 public class EnumType implements Type {
+    //TODO: Overwrite hashCode and equals for tests
+    //TODO: Enable validation of bytes
     private final String name;
-    private final Map<Character, String> values;
-    public EnumType(String name, Map<Character, String> values) {
+    private final Set<Character> validValues;
+    public EnumType(String name, Set<Character> validValues) {
         this.name = name;
-        this.values = values;
+        this.validValues = validValues;
     }
 
     @Override
