@@ -27,7 +27,7 @@ public class FixEncoderBenchmark {
                 "8=FIX.4.2\u00019=74\u000135=A\u000134=978\u000149=TESTSELL3\u000152=20190206-16:29:19.208\u000156=TESTBUY3\u000198=0\u0001108=60\u000110=137\u0001",
                 "8=FIX.4.2\u00019=62\u000135=5\u000134=977\u000149=TESTSELL3\u000152=20190206-16:28:51.518\u000156=TESTBUY3\u000110=092\u0001"
         };
-        private Random random = new Random();
+        private final Random random = new Random();
         public String getMessage() {
             return MESSAGES[random.nextInt(MESSAGES.length)];
         }
