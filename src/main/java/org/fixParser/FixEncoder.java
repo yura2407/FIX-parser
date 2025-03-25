@@ -2,12 +2,16 @@ package org.fixParser;
 
 import java.nio.ByteBuffer;
 
-public class FixParser {
+public class FixEncoder {
     private static final ByteBuffer buffer = ByteBuffer.allocateDirect(1024*1024);
     private static final StringBuilder field = new StringBuilder();
-    static byte[] encode(String message) {
+    public static byte[] encode(String message) {
         populateBuffer(message);
         return drainBuffer();
+    }
+
+    static ByteBuffer getBuffer() {
+        return buffer;
     }
 
     private static void populateBuffer(String message) {
