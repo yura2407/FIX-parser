@@ -26,36 +26,22 @@ class FixEncoderTest {
                 secondFieldLen,
                 secondFieldData
         );
-        byte[] actual = FixEncoder.encode(message);
+        byte[] actual = FixEncoder.encodeBinary(message);
         System.out.println(Arrays.toString(actual));
         assertArrayEquals(expected, actual);
     }
 
     @Test
-    void verifyBufferBehavior() {
+    void verifyBufferReturnsToOriginalStateAfterEncoding() {
         ByteBuffer buffer = FixEncoder.getBuffer();
         assertEquals(1024*1024, buffer.capacity());
         assertEquals(0, buffer.position());
         assertEquals(1024*1024, buffer.limit());
-        FixEncoder.encode(message);
-        byte[] bytes = new byte[buffer.position()];
-        buffer.get(bytes);
-        buffer.clear();
-        byte[] expected = new byte[]{0, 0, 0, 7, 0, 0, 0, 8};
-        assertArrayEquals(expected, bytes);
-    }
-
-    @Test
-    void convertIntToBytes() {
-        int val = 7;
-        byte[] expected = new byte[]{0, 0, 0, 7};
-        byte[] actual = new byte[4];
-        // Extract each byte using bitwise operations
-        actual[0] = (byte) (val >> 24); // Most significant byte
-        actual[1] = (byte) (val >> 16);
-        actual[2] = (byte) (val >> 8);
-        actual[3] = (byte) val; // Least significant byte
-
-        assertArrayEquals(expected, actual);
+        assertEquals(1024*1024, buffer.remaining());
+        FixEncoder.encodeBinary(message);
+        assertEquals(1024*1024, buffer.capacity());
+        assertEquals(0, buffer.position());
+        assertEquals(1024*1024, buffer.limit());
+        assertEquals(1024*1024, buffer.remaining());
     }
 }

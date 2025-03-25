@@ -3,9 +3,10 @@ package org.fixParser;
 import java.nio.ByteBuffer;
 
 public class FixEncoder {
+
+    //TODO make thread safe
     private static final ByteBuffer buffer = ByteBuffer.allocateDirect(1024*1024);
-    private static final StringBuilder field = new StringBuilder();
-    public static byte[] encode(String message) {
+    public static byte[] encodeBinary(String message) {
         populateBuffer(message);
         return drainBuffer();
     }
@@ -15,6 +16,7 @@ public class FixEncoder {
     }
 
     private static void populateBuffer(String message) {
+        final StringBuilder field = new StringBuilder();
         for (char c : message.toCharArray()) {
             switch (c) {
                 case '=' -> {
