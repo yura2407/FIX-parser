@@ -1,5 +1,4 @@
 package org.fixParser;
-
 public class FixEncoder {
 
     public static byte[] encodeBinary(String message) {
