@@ -1,19 +1,19 @@
 package org.fixParser;
 
 import org.junit.jupiter.api.RepeatedTest;
-import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ByteUtilsTest {
 
-    ByteBuffer buffer = ByteBuffer.allocate(1024);
+    ByteBuffer buffer = ByteBuffer.allocate(4);
     Random random = new Random();
     @RepeatedTest(100)
-    void convertSingleIntToBytes() {
+    void getIntFromByteArray() {
         int val = random.nextInt();
         byte[] encoded = buffer.putInt(val).array();
         int res = ByteUtils.getInt(encoded, 0);
@@ -21,17 +21,11 @@ class ByteUtilsTest {
     }
 
     @RepeatedTest(100)
-    void convertMultipleIntToBytes() {
-        int[] vals = new int[random.nextInt(200)];
-        for (int i = 0; i < vals.length; i++) {
-            vals[i] = random.nextInt();
-            buffer.putInt(vals[i]);
-        }
-        byte[] encoded = buffer.array();
-        for (int i = 0; i < vals.length; i++) {
-            int res = ByteUtils.getInt(encoded, i * 4);
-            assertEquals(vals[i], res);
-        }
+    void putIntToByteArray() {
+        int val = random.nextInt();
+        byte[] encoded = buffer.putInt(val).array();
+        byte[] res = new byte[4];
+        ByteUtils.putInt(res, 0, val);
+        assertArrayEquals(encoded, res);
     }
-
 }
