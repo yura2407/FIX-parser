@@ -8,4 +8,11 @@ public class ByteUtils {
                 ((bytes[offset + 2] & 0xFF) << 8) |
                 (bytes[offset + 3] & 0xFF);
     }
+
+    static void putInt(byte[] bytes, int offset, int value) {
+        bytes[offset] = (byte) (value >> 24);
+        bytes[offset + 1] = (byte) (value >> 16);
+        bytes[offset + 2] = (byte) (value >> 8);
+        bytes[offset + 3] = (byte) value;
+    }
 }
