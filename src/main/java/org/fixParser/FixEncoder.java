@@ -1,14 +1,12 @@
 package org.fixParser;
 
-import java.nio.ByteBuffer;
-
 public class FixEncoder {
 
     public static byte[] encodeBinary(String message) {
         return populateBuffer(message);
     }
 
-    public static ByteArrayProperties getByteArrayProperties(String message){
+    private static ByteArrayProperties getByteArrayProperties(String message){
         int numTags = 0;
         int numDataChars = 0;
         int c = 0;
@@ -40,8 +38,7 @@ public class FixEncoder {
         for (char c : message.toCharArray()) {
             switch (c) {
                 case '=' -> {
-                    //TODO int conversion without toString
-                    ByteUtils.putInt(buffer, offsetTags, Integer.parseInt(field.toString()));
+                    ByteUtils.putInt(buffer, offsetTags, Integer.parseInt(field, 0, field.length(), 10));
                     offsetTags+=4;
                     field.setLength(0);
                     ByteUtils.putInt(buffer, offsetTags, offsetData);

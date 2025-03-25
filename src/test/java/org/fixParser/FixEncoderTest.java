@@ -2,10 +2,8 @@ package org.fixParser;
 
 import org.junit.jupiter.api.Test;
 
-import java.nio.ByteBuffer;
-import java.util.Arrays;
-
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class FixEncoderTest {
 
@@ -13,8 +11,7 @@ class FixEncoderTest {
 
     @Test
     void sizeIsObtainedCorrectly() {
-        assertEquals(32, FixEncoder.getByteArrayProperties(message).totalSize);
-        assertEquals(2, FixEncoder.getByteArrayProperties(message).numTags);
+        assertEquals(32, FixEncoder.encodeBinary(message).length);
     }
     @Test
     void encodeSimpleMessage() {
