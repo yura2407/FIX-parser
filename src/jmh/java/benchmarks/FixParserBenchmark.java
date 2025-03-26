@@ -4,6 +4,7 @@ import org.fixParser.Encoding;
 import org.fixParser.FixEncoder;
 import org.fixParser.FixParser;
 import org.openjdk.jmh.annotations.*;
+import org.openjdk.jmh.profile.GCProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -63,13 +64,13 @@ public class FixParserBenchmark {
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
     public void decodeOneCustomMessageWithInterestFieldsNonRepetitive(MyState state) {
-        FixParser.parseBinaryNonRepetitive(state.getCustomMessage(), Encoding.CUSTOM, 8,35,52);
+        FixParser.parseBinaryNonRepetitive(state.getCustomMessage(), Encoding.CUSTOM, 8,35,52,5243);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
     public void decodeOneCustomMessageWithInterestFieldsRepetitive(MyState state) {
-        FixParser.parseBinaryRepetitive(state.getCustomMessage(), Encoding.CUSTOM, 8,35,52);
+        FixParser.parseBinaryRepetitive(state.getCustomMessage(), Encoding.CUSTOM, 8,35,52,5243);
     }
 
     @BenchmarkMode(Mode.Throughput)
@@ -87,19 +88,20 @@ public class FixParserBenchmark {
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
     public void decodeOneDefaultMessageWithInterestFieldsNonRepetitive(MyState state) {
-        FixParser.parseBinaryNonRepetitive(state.getDefaultMessage(), Encoding.ASCII, 8,35,52);
+        FixParser.parseBinaryNonRepetitive(state.getDefaultMessage(), Encoding.ASCII, 8,35,52,5243);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
     public void decodeOneDefaultMessageWithInterestFieldsRepetitive(MyState state) {
-        FixParser.parseBinaryRepetitive(state.getDefaultMessage(), Encoding.ASCII, 8,35,52);
+        FixParser.parseBinaryRepetitive(state.getDefaultMessage(), Encoding.ASCII, 8,35,52,5243);
     }
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(FixParserBenchmark.class.getSimpleName())
                 .forks(1)
+                .addProfiler(GCProfiler.class)
                 .build();
 
         new Runner(opt).run();
