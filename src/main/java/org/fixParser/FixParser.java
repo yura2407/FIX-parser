@@ -14,7 +14,7 @@ interface MapUpdater<K, V> {
 
 public class FixParser {
 
-    //TODO can we figure out repetitive tags from the message?
+    //TODO add Exception handling
     private static final MapUpdater<Integer, String> NON_REPETITIVE_MAP_UPDATER = (map, key, value, tagsLeft) -> {
         map.put(key, value);
         return tagsLeft - 1;

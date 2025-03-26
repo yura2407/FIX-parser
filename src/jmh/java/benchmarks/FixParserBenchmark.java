@@ -5,6 +5,7 @@ import org.fixParser.FixEncoder;
 import org.fixParser.FixParser;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.GCProfiler;
+import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -101,6 +102,7 @@ public class FixParserBenchmark {
         Options opt = new OptionsBuilder()
                 .include(FixParserBenchmark.class.getSimpleName())
                 .forks(1)
+                .addProfiler(StackProfiler.class)
                 .addProfiler(GCProfiler.class)
                 .build();
 
