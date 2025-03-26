@@ -1,56 +1,80 @@
 package org.fixParser;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @FunctionalInterface
 interface MapUpdater<K, V> {
-    void updateMap(Map<K, V> map, K key, String value);
+    int processMapUpdateAndReturnNumberOfTagsLeft(
+            Map<K, V> map, K key, String value, int tagsLeft
+    );
 }
 
 public class FixParser {
 
     //TODO can we figure out repetitive tags from the message?
-    private static final MapUpdater<Integer, String> nonRepetitiveMapUpdater = Map::put;
-    private static final MapUpdater<Integer, List<String>> repetitiveMapUpdater = (map, key, value) ->
-            map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+    private static final MapUpdater<Integer, String> NON_REPETITIVE_MAP_UPDATER = (map, key, value, tagsLeft) -> {
+        map.put(key, value);
+        return tagsLeft - 1;
+    };
+    private static final MapUpdater<Integer, List<String>> REPETITIVE_MAP_UPDATER = (map, key, value, tagsLeft) -> {
+        map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+        return tagsLeft;
+    };
 
-    public static HashMap<Integer, String> parseBinaryNonRepetitive(byte[] message, int... tags) {
+    public static HashMap<Integer, String> parseBinaryNonRepetitive(byte[] message, Encoding encoding, int... tags) {
         HashMap<Integer, String> map = new HashMap<>();
         if (tags.length == 0) {
-            readCustomBinaryArray(message, true, map, nonRepetitiveMapUpdater);
+            readBinaryArray(message, true, map, NON_REPETITIVE_MAP_UPDATER, encoding);
             return map;
         }
         for (int tag: tags) {
             map.put(tag, "");
         }
-        readCustomBinaryArray(message, false, map, nonRepetitiveMapUpdater);
+        readBinaryArray(message, false, map, NON_REPETITIVE_MAP_UPDATER, encoding);
         return map;
     }
 
-    public static HashMap<Integer, List<String>> parseBinaryRepetitive(byte[] message, int... tags) {
+    public static HashMap<Integer, List<String>> parseBinaryRepetitive(byte[] message, Encoding encoding, int... tags) {
         HashMap<Integer, List<String>> map = new HashMap<>();
         if (tags.length == 0){
-            readCustomBinaryArray(message, true, map, repetitiveMapUpdater);
+            readBinaryArray(message, true, map, REPETITIVE_MAP_UPDATER, encoding);
             return map;
         }
         for (int tag: tags) {
             map.put(tag, new ArrayList<>());
         }
-        readCustomBinaryArray(message, false, map, repetitiveMapUpdater);
+        readBinaryArray(message, false, map, REPETITIVE_MAP_UPDATER, encoding);
         return map;
+    }
+
+    private static <T> void readBinaryArray(
+            byte[] message,
+            boolean getAll,
+            HashMap<Integer, T> map,
+            MapUpdater<Integer, T> mapUpdater,
+            Encoding encoding
+    ) {
+        switch (encoding) {
+            case CUSTOM -> readCustomBinaryArray(message, getAll, map, mapUpdater);
+            case ASCII -> readDefaultBinaryArray(message, getAll, map, mapUpdater);
+        }
     }
 
     private static <T> void readCustomBinaryArray(
             byte[] message,
             boolean getAll,
             HashMap<Integer, T> map,
-            MapUpdater mapUpdater
+            MapUpdater<Integer, T> mapUpdater
     ) {
         int tagOffset = 0;
         int fieldOffset;
         int tag;
         StringBuilder stringBuilder = new StringBuilder();
         int tagBytes = ByteUtils.getInt(message, tagOffset);
+        int numTags = getAll ? tagBytes / 8 : map.size();
         tagOffset += 4;
         while (tagOffset < tagBytes) {
             tag = ByteUtils.getInt(message, tagOffset);
@@ -60,10 +84,52 @@ public class FixParser {
                 while (message[fieldOffset] != '\u0001') {
                     stringBuilder.append((char) message[fieldOffset++]);
                 }
-                mapUpdater.updateMap(map, tag, stringBuilder.toString());
+                numTags = mapUpdater.processMapUpdateAndReturnNumberOfTagsLeft(
+                        map, tag, stringBuilder.toString(), numTags
+                );
                 stringBuilder.setLength(0);
+                if (numTags == 0) {
+                    return;
+                }
             }
             tagOffset += 4;
+        }
+    }
+
+    private static <T> void readDefaultBinaryArray(
+            byte[] message,
+            boolean getAll,
+            HashMap<Integer, T> map,
+            MapUpdater<Integer, T> mapUpdater
+    ) {
+        int offset = 0;
+        int tag;
+        StringBuilder stringBuilder = new StringBuilder();
+        int numTags = getAll ? Integer.MAX_VALUE : map.size();
+        while (offset < message.length) {
+            while (message[offset] != '=') {
+                stringBuilder.append((char) message[offset++]);
+            }
+            tag = Integer.parseInt(stringBuilder, 0, stringBuilder.length(), 10);
+            stringBuilder.setLength(0);
+            offset += 1; //Skip '='
+            if (getAll || map.containsKey(tag)) {
+                while (message[offset] != '\u0001') {
+                    stringBuilder.append((char) message[offset++]);
+                }
+                numTags = mapUpdater.processMapUpdateAndReturnNumberOfTagsLeft(
+                        map, tag, stringBuilder.toString(), numTags
+                );
+                stringBuilder.setLength(0);
+                if (numTags == 0) {
+                    return;
+                }
+            } else {
+                while (message[offset] != '\u0001') {
+                    offset++;
+                }
+            }
+            offset++;
         }
     }
 }

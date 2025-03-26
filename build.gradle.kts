@@ -1,4 +1,5 @@
 plugins {
+    id("me.champeau.jmh") version "0.7.2"
     id("java")
 }
 
@@ -10,8 +11,14 @@ repositories {
 }
 
 dependencies {
+    jmh("org.openjdk.jmh:jmh-core:1.37")
+    jmh("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+    jmhAnnotationProcessor("org.openjdk.jmh:jmh-generator-annprocess:1.37")
+    jmh("org.openjdk.jmh:jmh-generator-bytecode:0.9")
     testImplementation(platform("org.junit:junit-bom:5.9.1"))
     testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("org.openjdk.jmh:jmh-core:1.37")
+    testImplementation("org.openjdk.jmh:jmh-generator-annprocess:1.37")
 }
 
 tasks.test {
