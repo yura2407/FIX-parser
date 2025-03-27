@@ -99,12 +99,12 @@ Brief summary of this data:
 1. FixEncoder and FixParser do not currently provide any input validation on either binary or string
 2. You need to take care of using supplying correct encoding to FixParser, otherwise, unexpected results/exceptions will happen, currently there is no validation of binary message matching encoding
 ## Hardware specs (for performance testing results)
-Device name	DESKTOP-BUI78AB
-Processor	Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz   2.40 GHz
-Installed RAM	8.00 GB (7.90 GB usable)
-Device ID	04613DD0-4055-437C-B4BB-A98A9EB7CAA0
-Product ID	00330-80000-00000-AA345
-System type	64-bit operating system, x64-based processor
+Device name	DESKTOP-BUI78AB <br/>
+Processor	Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz   2.40 GHz <br/>
+Installed RAM	8.00 GB (7.90 GB usable)<br/>
+Device ID	04613DD0-4055-437C-B4BB-A98A9EB7CAA0<br/>
+Product ID	00330-80000-00000-AA345<br/>
+System type	64-bit operating system, x64-based processor<br/>
 
 
 
