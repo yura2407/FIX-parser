@@ -98,6 +98,11 @@ Brief summary of this data:
 ## Important considerations
 1. FixEncoder and FixParser do not currently provide any input validation on either binary or string
 2. You need to take care of using supplying correct encoding to FixParser, otherwise, unexpected results/exceptions will happen, currently there is no validation of binary message matching encoding
+## Next steps and enhancements
+1. Add message validation
+2. Add exception handling (will be narrowed down by validation)
+3. Expand encoding methods coverage
+4. Enable to detect encoding method from the binary message so client does not need to keep track of it
 ## Hardware specs (for performance testing results)
 Device name	DESKTOP-BUI78AB <br/>
 Processor	Intel(R) Core(TM) i5-6200U CPU @ 2.30GHz   2.40 GHz <br/>
