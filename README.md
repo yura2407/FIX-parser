@@ -48,9 +48,9 @@ and ASCII encoded binary FIX messages. Encoding enum specifies mode and you must
 FixParser is a static class with no internal persistent state, it is thread-safe. **!!! If you supply your own HashMap, it's on you to ensure map's thread-safety !!!**
 ```java
 //Encode a FIX message to binary using Custom encoding provided by API
-byte[] encodedMessage = FixEncoder.encodeBinary(MESSAGES[3]);
+byte[] encodedMessage = FixEncoder.encodeBinary("8=FIX.4.4\u00019=63\u000135=5\u000134=1091\u0001");
 //Encode a FIX message to binary using ASCII encoding
-byte[] encodedMessageAscii = MESSAGES[3].getBytes(StandardCharsets.US_ASCII);
+byte[] encodedMessageAscii = "8=FIX.4.4\u00019=63\u000135=5\u000134=1091\u0001".getBytes(StandardCharsets.US_ASCII);
 //Decode a binary FIX message without repetitive tags using Custom encoding provided by API and get a map with all fields
 Map<Integer, String> allFieldsNonRepetitive = FixParser.parseBinaryNonRepetitive(encodedMessage, Encoding.CUSTOM);
 //Decode a binary FIX message with repetitive tags using Custom encoding provided by API and get a map with all fields
