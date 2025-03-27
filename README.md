@@ -1,7 +1,25 @@
 # FIX-parser
-Binary FIX parser for Java
+Binary FIX parser and encoder (optionally) for Java
 ## Overview
-This is a binary FIX parser for Java. It also provides a custom message encoder for better efficiency
+This is a binary FIX parser for Java. It also provides a custom message encoder for better efficiency. It is up to you if you want to use the provided encoder (goes under CUSTOM) or the default ASCII one. But you need to ensure that the binary message was encoded by the same method as you supply when decoding (e.g.use Encoding.CUSTOM for messages encoded using FixEncoder from this API and Encoding.ASCII for messages encoded using String.getBytes(StandardCharsets.US_ASCII). **Verify your encoding before using parser**. This API supports any valid FIX message which uses only ASCII characters, custom tags with any integer tag number are allowed.
+### Prerequisites
+- Java 17 or higher
+- Gradle 7.3 or higher
+### Installation
+Clone the repository:
+```sh
+git clone https://github.com/yura2407/FIX-parser.git
+cd FIX-parser
+./gradlew build
+```
+Or just open as a Project in your IDE and build using gradle
+To use the FIX parser in your project, include the following dependency in your build.gradle.kts file:
+```kotlin
+dependencies {
+    implementation(project(":FIX-parser"))
+}
+```
+To run benchmarks, run src/jmh/benchmarks/BenchmarkRunner.main()
 ## Encoder
 The encoder is a custom implementation of the FIX message encoder. 
 It uses internal schema to encode the message in order to be able to parse it 
@@ -79,7 +97,6 @@ Getting tags using String manipulation is inefficient and leads to massive alloc
 ## Important considerations
 1. FixEncoder and FixParser do not currently provide any input validation on either binary or string
 2. You need to take care of using supplying correct encoding to FixParser, otherwise, unexpected results/exceptions will happen, currently there is no validation of binary message matching encoding
-   
 
 
 
