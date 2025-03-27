@@ -60,7 +60,7 @@ Encoder (customBinaryEncodingMessage) was benchmarked against default ASCII enco
 It has lower performance comparing to ASCII, but you get benefits of it on decoding stage. It is recommended to use Custom encoder when you encode message once but need to parse it many times (e.g internal communication within the system)
 ![image](https://github.com/user-attachments/assets/4e3a7134-0384-47d1-a4d6-43682eebaef5)
 ## Parser
-Parser is more flexible than the encoder. It can parse both customly (using the encoder above)
+Parser is very flexible. It can parse both customly (using the encoder above)
 and ASCII encoded binary FIX messages. Encoding enum specifies mode and you must pass it to every call. Parser can handle messages with and without repetitive tags and you choose the function call depending on the existence of repetitive tags in your FIX message (if you are not sure, just use repetitive mode, but non-repetitve mode is more performant). You can specify tags you are interested in (recommended), or you will receive all the tags (not recommended in production mode, but can be helpful for testing/exploration). FixParser returns you a Map (more in usage) with all or interested tags and their values from a particular message. There is a possibility to supply your own HashMap with tags as keys in a function call to avoid extra allocation and reuse the existing map. If tag of interest is not present in a message, it`s value in result map will be empty.
 ### Parser usage
 FixParser is a static class with no internal persistent state, it is thread-safe. **!!! If you supply your own HashMap, it's on you to ensure map's thread-safety !!!**
