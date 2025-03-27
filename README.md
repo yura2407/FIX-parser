@@ -87,12 +87,13 @@ HashMap<Integer, List<String>> inputMap = new HashMap<>(
 FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM, inputMap);
 ```
 ### Parser performance
-![image](https://github.com/user-attachments/assets/f6029b08-2489-4f07-b1b6-5a9148fa3f69)
+![image](https://github.com/user-attachments/assets/9872ca95-9242-4859-9337-ac961746cab1)
 ![image](https://github.com/user-attachments/assets/b90fdd09-27c0-4a07-b4cc-6d4412808e04)
 Brief summary of this data:
 1. Custom encoding gives higher throughput than ASCII for all operations. This difference is much more notable in desired use cases of getting only fields of interest (either repetitive or non-repetitive).
-2. Providing HashMap reduces allocation twices with no significant effect on throughput, also it automatically limits tags of interest by the provided keys in a Map. This methos is strongly encourage and is perhaps the most efficient out of provided
-Getting tags using String manipulation is inefficient and leads to massive allocations and lower throughput (just for reference, not part of API)
+2. Providing HashMap reduces allocation per operation twice with no significant effect on throughput, also, it automatically limits tags of interest by the provided keys in a Map. This method is strongly encouraged and is perhaps the most efficient out of those provided.
+3. Getting tags using String manipulation (comparison by getting all tags via API) is inefficient and leads to bigger allocations per operation and lower throughput (just for reference, not part of API)
+![image](https://github.com/user-attachments/assets/7345eee2-40a1-4e86-a48b-65787a9eac9a)
 ![image](https://github.com/user-attachments/assets/8a942f74-ce99-475c-81b6-00dcb25d6650)
 ## Important considerations
 1. FixEncoder and FixParser do not currently provide any input validation on either binary or string
