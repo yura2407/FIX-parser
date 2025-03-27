@@ -1,7 +1,6 @@
 package org.fixParser;
 public class FixEncoder {
 
-    //TODO add Exception handling
     public static byte[] encodeBinary(String message) {
         return populateBuffer(message);
     }

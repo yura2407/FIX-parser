@@ -1,8 +1,10 @@
 package org.fixParser;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Random;
 
 public class Main {
 
@@ -16,56 +18,27 @@ public class Main {
             "8=FIX.4.2\u00019=74\u000135=A\u000134=978\u000149=TESTSELL3\u000152=20190206-16:29:19.208\u000156=TESTBUY3\u000198=0\u0001108=60\u000110=137\u0001",
             "8=FIX.4.2\u00019=62\u000135=5\u000134=977\u000149=TESTSELL3\u000152=20190206-16:28:51.518\u000156=TESTBUY3\u000110=092\u0001"
     };
-    private static final Random random = new Random();
-    private static final byte[][] customBinaryMessagePool = new byte[MESSAGES.length][];
-    private static final byte[][] defaultBinaryMessagePool = new byte[MESSAGES.length][];
-    private static void setup() {
-        for (int i = 0; i < MESSAGES.length; i++) {
-            customBinaryMessagePool[i] = FixEncoder.encodeBinary(MESSAGES[i]);
-            defaultBinaryMessagePool[i] = MESSAGES[i].getBytes(StandardCharsets.US_ASCII);
-        }
-    }
-
-    private static final Map<Encoding, byte[][]> messagePool = Map.of(
-            Encoding.CUSTOM, customBinaryMessagePool,
-            Encoding.ASCII, defaultBinaryMessagePool
-    );
-
-    //Usage: args[0] = "CUSTOM" or "ASCII", args[1] = "decode" or "encode", args[2] = "repetitive" or "non-repetitive"
     public static void main(String[] args) {
-        setup();
-//        System.out.println(Arrays.deepToString(customBinaryMessagePool));
-//        System.out.println(Arrays.toString(args));
-        if (args.length < 2){
-            usage();
-        } else {
-            Encoding encoding = Encoding.valueOf(args[0]);
-            if (args[1].equals("decode")) {
-                if (args[2].equals("repetitive")) {
-                    while (true) {
-                        FixParser.parseBinaryRepetitive(messagePool.get(encoding)[random.nextInt(MESSAGES.length)], encoding);
-                    }
-                } else if (args[2].equals("non-repetitive")) {
-                    while (true) {
-                        FixParser.parseBinaryNonRepetitive(messagePool.get(encoding)[random.nextInt(MESSAGES.length)], encoding);
-                    }
-                } else {
-                    usage();
-                }
-            } else if (args[1].equals("encode")) {
-                while (true) {
-                    FixEncoder.encodeBinary(MESSAGES[random.nextInt(MESSAGES.length)]);
-                }
-            } else {
-                usage();
-            }
-        }
+        //Encode a FIX message to binary using Custom encoding provided by API
+        byte[] encodedMessage = FixEncoder.encodeBinary(MESSAGES[3]);
+        //Encode a FIX message to binary using ASCII encoding
+        byte[] encodedMessageAscii = MESSAGES[3].getBytes(StandardCharsets.US_ASCII);
+        //Decode a binary FIX message without repetitive tags using Custom encoding provided by API and get a map with all fields
+        Map<Integer, String> allFieldsNonRepetitive = FixParser.parseBinaryNonRepetitive(encodedMessage, Encoding.CUSTOM);
+        //Decode a binary FIX message with repetitive tags using Custom encoding provided by API and get a map with all fields
+        Map<Integer, List<String>> allFieldsRepetitive = FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM);
+        //Decode a binary FIX message with repetitive tags using Custom encoding provided by API and get a map with specific tags
+        Map<Integer, List<String>> specificTagsRepetitive = FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM, 9, 35);
+        //Decode a binary FIX message without repetitive tags using ASCII encoding provided by API and get a map with specific tags
+        Map<Integer, String> specificTagsNonRepetitive = FixParser.parseBinaryNonRepetitive(encodedMessageAscii, Encoding.ASCII, 9, 35);
+        //Decode a binary FIX message with repetitive tags using Custom encoding provided by API with provided map of interesting tags
+        HashMap<Integer, List<String>> inputMap = new HashMap<>(
+                Map.of(8, new ArrayList<>(List.of("random_val", "random_val2")),
+                        35, new ArrayList<>()
+                )
+        );
+        //It will populate your map with the values of the tags you are interested in, old values will be erased
+        FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM, inputMap);
     }
 
-    private static void usage(){
-        System.out.println(
-                "Usage: args[0] = \"CUSTOM\" or \"ASCII\", args[1] = \"decode\" or \"encode\"," +
-                        " args[2] = \"repetitive\" or \"non-repetitive\""
-        );
-    }
 }

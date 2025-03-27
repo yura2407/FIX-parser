@@ -1,9 +1,9 @@
 package benchmarks;
+
 import org.fixParser.FixEncoder;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 import org.openjdk.jmh.profile.GCProfiler;
-import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
@@ -37,7 +37,7 @@ public class FixEncoderBenchmark {
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void encodeMessage(MyState state) {
+    public void customBinaryEncodingMessage(MyState state) {
         FixEncoder.encodeBinary(state.getMessage());
     }
 
@@ -51,7 +51,6 @@ public class FixEncoderBenchmark {
         Options opt = new OptionsBuilder()
                 .include(FixEncoderBenchmark.class.getSimpleName())
                 .forks(1)
-                .addProfiler(StackProfiler.class)
                 .addProfiler(GCProfiler.class)
                 .build();
 

@@ -5,14 +5,13 @@ import org.fixParser.FixEncoder;
 import org.fixParser.FixParser;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.profile.GCProfiler;
-import org.openjdk.jmh.profile.StackProfiler;
 import org.openjdk.jmh.runner.Runner;
 import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @OutputTimeUnit(TimeUnit.SECONDS)
@@ -33,6 +32,23 @@ public class FixParserBenchmark {
         private final Random random = new Random();
         private final byte[][] customBinaryMessagePool = new byte[MESSAGES.length][];
         private final byte[][] defaultBinaryMessagePool = new byte[MESSAGES.length][];
+        @Param({"CUSTOM", "ASCII"})
+        private Encoding encoding;
+
+        private final HashMap<Integer, String> inputMapNonRepetitive = new HashMap<>(
+                Map.of(8, "random_val",
+                        35, "",
+                        52, "random_val",
+                        5243, ""
+                )
+        );
+        private final HashMap<Integer, List<String>> inputMapRepetitive = new HashMap<>(
+                Map.of(8, new ArrayList<>(List.of("random_val", "random_val2")),
+                        35, new ArrayList<>(),
+                        52, new ArrayList<>(List.of("random_val", "random_val2")),
+                        5243, new ArrayList<>(List.of("random_val"))
+                )
+        );
 
         @Setup
         public void setup() {
@@ -41,68 +57,54 @@ public class FixParserBenchmark {
                 defaultBinaryMessagePool[i] = MESSAGES[i].getBytes(StandardCharsets.US_ASCII);
             }
         }
-        public byte[] getCustomMessage() {
-            return customBinaryMessagePool[random.nextInt(MESSAGES.length)];
+        public byte[] getBinaryMessage(Encoding encoding) {
+            return switch (encoding) {
+                case CUSTOM -> customBinaryMessagePool[random.nextInt(MESSAGES.length)];
+                case ASCII -> defaultBinaryMessagePool[random.nextInt(MESSAGES.length)];
+            };
         }
-
-        public byte[] getDefaultMessage() {
-            return defaultBinaryMessagePool[random.nextInt(MESSAGES.length)];
-        }
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void decodeOneCustomMessageWithAllFieldsNonRepetitive(MyState state) {
-        FixParser.parseBinaryNonRepetitive(state.getCustomMessage(), Encoding.CUSTOM);
+    public void decodeOneMessageWithAllFieldsNonRepetitive(MyState state) {
+        FixParser.parseBinaryNonRepetitive(state.getBinaryMessage(state.encoding), state.encoding);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void decodeOneCustomMessageWithAllFieldsRepetitive(MyState state) {
-        FixParser.parseBinaryRepetitive(state.getCustomMessage(), Encoding.CUSTOM);
+    public void decodeOneMessageWithAllFieldsRepetitive(MyState state) {
+        FixParser.parseBinaryRepetitive(state.getBinaryMessage(state.encoding), state.encoding);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void decodeOneCustomMessageWithInterestFieldsNonRepetitive(MyState state) {
-        FixParser.parseBinaryNonRepetitive(state.getCustomMessage(), Encoding.CUSTOM, 8,35,52,5243);
+    public void decodeOneMessageWithInterestFieldsNonRepetitive(MyState state) {
+        FixParser.parseBinaryNonRepetitive(state.getBinaryMessage(state.encoding), state.encoding, 8,35,52,5243);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void decodeOneCustomMessageWithInterestFieldsRepetitive(MyState state) {
-        FixParser.parseBinaryRepetitive(state.getCustomMessage(), Encoding.CUSTOM, 8,35,52,5243);
+    public void decodeOneMessageWithInterestFieldsRepetitive(MyState state) {
+        FixParser.parseBinaryRepetitive(state.getBinaryMessage(state.encoding), state.encoding, 8,35,52,5243);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void decodeOneDefaultMessageWithAllFieldsNonRepetitive(MyState state) {
-        FixParser.parseBinaryNonRepetitive(state.getDefaultMessage(), Encoding.ASCII);
+    public void decodeOneMessageWithInterestFieldsNonRepetitiveWithReusableHashMap(MyState state) {
+        FixParser.parseBinaryNonRepetitive(state.getBinaryMessage(state.encoding), state.encoding, state.inputMapNonRepetitive);
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void decodeOneDefaultMessageWithAllFieldsRepetitive(MyState state) {
-        FixParser.parseBinaryRepetitive(state.getDefaultMessage(), Encoding.ASCII);
-    }
-
-    @BenchmarkMode(Mode.Throughput)
-    @Benchmark
-    public void decodeOneDefaultMessageWithInterestFieldsNonRepetitive(MyState state) {
-        FixParser.parseBinaryNonRepetitive(state.getDefaultMessage(), Encoding.ASCII, 8,35,52,5243);
-    }
-
-    @BenchmarkMode(Mode.Throughput)
-    @Benchmark
-    public void decodeOneDefaultMessageWithInterestFieldsRepetitive(MyState state) {
-        FixParser.parseBinaryRepetitive(state.getDefaultMessage(), Encoding.ASCII, 8,35,52,5243);
+    public void decodeOneMessageWithInterestFieldsRepetitiveWithReusableHashMap(MyState state) {
+        FixParser.parseBinaryRepetitive(state.getBinaryMessage(state.encoding), state.encoding, state.inputMapRepetitive);
     }
 
     public static void main(String[] args) throws RunnerException {
         Options opt = new OptionsBuilder()
                 .include(FixParserBenchmark.class.getSimpleName())
                 .forks(1)
-                .addProfiler(StackProfiler.class)
                 .addProfiler(GCProfiler.class)
                 .build();
 

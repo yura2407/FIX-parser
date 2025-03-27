@@ -3,10 +3,7 @@ package org.fixParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.fixParser.TestUtils.parseFixMessageNonRepetitive;
@@ -27,14 +24,26 @@ public class ThreadTest {
             "8=FIX.4.2\u00019=62\u000135=5\u000134=977\u000149=TESTSELL3\u000152=20190206-16:28:51.518\u000156=TESTBUY3\u000110=092\u0001"
     };
     private final Random random = new Random();
-    private final Map<String,Map<Integer, String>> expectedNonRepetitive = new HashMap<>();
-    private final Map<String,Map<Integer, List<String>>> expectedRepetitive = new HashMap<>();
+    private final Map<String,Map<Integer, String>> expectedNonRepetitiveFull = new HashMap<>();
+    private final Map<String,Map<Integer, List<String>>> expectedRepetitiveFull = new HashMap<>();
+    private final Map<String,Map<Integer, List<String>>> expectedRepetitiveTwoTags = new HashMap<>();
+    private final Map<String,Map<Integer, String>> expectedNonRepetitiveTwoTags = new HashMap<>();
 
     @BeforeEach
     void setup() {
         for (String message : MESSAGES) {
-            expectedNonRepetitive.put(message, parseFixMessageNonRepetitive(message));
-            expectedRepetitive.put(message, parseFixMessageRepetitive(message));
+            expectedNonRepetitiveFull.put(message, parseFixMessageNonRepetitive(message));
+            expectedRepetitiveFull.put(message, parseFixMessageRepetitive(message));
+            expectedRepetitiveTwoTags.put(message, Map.of(
+                    9, parseFixMessageRepetitive(message).get(9),
+                    35, parseFixMessageRepetitive(message).get(35)
+                )
+            );
+            expectedNonRepetitiveTwoTags.put(message, Map.of(
+                    9, parseFixMessageNonRepetitive(message).get(9),
+                    35, parseFixMessageNonRepetitive(message).get(35)
+                )
+            );
         }
     }
 
@@ -44,9 +53,19 @@ public class ThreadTest {
         AtomicBoolean failed = new AtomicBoolean(false);
         for (int i = 0; i < 5; i++) {
             threads[i] = new Thread(() -> {
+                HashMap<Integer, String> inputNonRepetitive = new HashMap<>(
+                        Map.of(9, "random_val",
+                                35, ""
+                        )
+                );
+                HashMap<Integer, List<String>> inputRepetitive = new HashMap<>(
+                        Map.of(9, new ArrayList<>(List.of("random_val", "random_val2")),
+                                35, new ArrayList<>()
+                        )
+                );
                 for (int j = 0; j < 100_000; j++) {
                     try {
-                        encodeDecodeVerify(MESSAGES[random.nextInt(MESSAGES.length)]);
+                        encodeDecodeVerify(MESSAGES[random.nextInt(MESSAGES.length)], inputNonRepetitive, inputRepetitive);
                     } catch (Error e) {
                         failed.set(true);
                         fail(e);
@@ -63,16 +82,25 @@ public class ThreadTest {
         }
     }
 
-    private void encodeDecodeVerify(String message) {
+    private void encodeDecodeVerify(String message, HashMap<Integer, String> inputNonRepetitive, HashMap<Integer, List<String>> inputRepetitive) {
         byte[] customEncoded = FixEncoder.encodeBinary(message);
         byte[] asciiEncoded = message.getBytes();
         Map<Integer, String> actualCustomNonRepetitive = FixParser.parseBinaryNonRepetitive(customEncoded, Encoding.CUSTOM);
         Map<Integer, String> actualAsciiNonRepetitive = FixParser.parseBinaryNonRepetitive(asciiEncoded, Encoding.ASCII);
         Map<Integer, List<String>> actualCustomRepetitive = FixParser.parseBinaryRepetitive(customEncoded, Encoding.CUSTOM);
         Map<Integer, List<String>> actualAsciiRepetitive = FixParser.parseBinaryRepetitive(asciiEncoded, Encoding.ASCII);
-        assertEquals(expectedNonRepetitive.get(message), actualCustomNonRepetitive);
-        assertEquals(expectedNonRepetitive.get(message), actualAsciiNonRepetitive);
-        assertEquals(expectedRepetitive.get(message), actualCustomRepetitive);
-        assertEquals(expectedRepetitive.get(message), actualAsciiRepetitive);
+        assertEquals(expectedNonRepetitiveFull.get(message), actualCustomNonRepetitive);
+        assertEquals(expectedNonRepetitiveFull.get(message), actualAsciiNonRepetitive);
+        assertEquals(expectedRepetitiveFull.get(message), actualCustomRepetitive);
+        assertEquals(expectedRepetitiveFull.get(message), actualAsciiRepetitive);
+
+        FixParser.parseBinaryNonRepetitive(customEncoded, Encoding.CUSTOM, inputNonRepetitive);
+        assertEquals(expectedNonRepetitiveTwoTags.get(message), inputNonRepetitive);
+        FixParser.parseBinaryNonRepetitive(asciiEncoded, Encoding.ASCII, inputNonRepetitive);
+        assertEquals(expectedNonRepetitiveTwoTags.get(message), inputNonRepetitive);
+        FixParser.parseBinaryRepetitive(customEncoded, Encoding.CUSTOM, inputRepetitive);
+        assertEquals(expectedRepetitiveTwoTags.get(message), inputRepetitive);
+        FixParser.parseBinaryRepetitive(asciiEncoded, Encoding.ASCII, inputRepetitive);
+        assertEquals(expectedRepetitiveTwoTags.get(message), inputRepetitive);
     }
 }
