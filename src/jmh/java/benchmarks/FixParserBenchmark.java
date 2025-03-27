@@ -4,11 +4,6 @@ import org.fixParser.Encoding;
 import org.fixParser.FixEncoder;
 import org.fixParser.FixParser;
 import org.openjdk.jmh.annotations.*;
-import org.openjdk.jmh.profile.GCProfiler;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -99,15 +94,5 @@ public class FixParserBenchmark {
     @Benchmark
     public void decodeOneMessageWithInterestFieldsRepetitiveWithReusableHashMap(MyState state) {
         FixParser.parseBinaryRepetitive(state.getBinaryMessage(state.encoding), state.encoding, state.inputMapRepetitive);
-    }
-
-    public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder()
-                .include(FixParserBenchmark.class.getSimpleName())
-                .forks(1)
-                .addProfiler(GCProfiler.class)
-                .build();
-
-        new Runner(opt).run();
     }
 }

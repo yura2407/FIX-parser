@@ -3,11 +3,6 @@ package benchmarks;
 import org.fixParser.FixEncoder;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
-import org.openjdk.jmh.profile.GCProfiler;
-import org.openjdk.jmh.runner.Runner;
-import org.openjdk.jmh.runner.RunnerException;
-import org.openjdk.jmh.runner.options.Options;
-import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Random;
@@ -45,15 +40,5 @@ public class FixEncoderBenchmark {
     @Benchmark
     public void defaultBinaryEncodingMessage(MyState state, Blackhole blackhole) {
         blackhole.consume(state.getMessage().getBytes(StandardCharsets.US_ASCII));
-    }
-
-    public static void main(String[] args) throws RunnerException {
-        Options opt = new OptionsBuilder()
-                .include(FixEncoderBenchmark.class.getSimpleName())
-                .forks(1)
-                .addProfiler(GCProfiler.class)
-                .build();
-
-        new Runner(opt).run();
     }
 }
