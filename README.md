@@ -38,21 +38,52 @@ Where does 8-1-length(tag in chars) come from?
 We need 4 bytes for the tag number and 4 bytes for the tag`s data offset, but we do not
 store '=' and you deduct length of tag in characters as it does not need to be stored
 ### Encoder performance
-The encoder
-|Benchmark                                                             | Mode    Cnt        Score         Error   Units
------------------------------------------------------------------------------------------------------------------------
-| FixEncoderBenchmark.customBinaryEncodingMessage                      | thrpt  |   5   319974.582 �  279839.226   ops/s
-| FixEncoderBenchmark.customBinaryEncodingMessage:gc.alloc.rate        | thrpt  |   5      221.812 �     193.988  MB/sec
-| FixEncoderBenchmark.customBinaryEncodingMessage:gc.alloc.rate.norm   | thrpt  |   5      726.997 �       0.857    B/op
-| FixEncoderBenchmark.customBinaryEncodingMessage:gc.count             | thrpt  |   5      148.000                counts
-| FixEncoderBenchmark.customBinaryEncodingMessage:gc.time              | thrpt  |   5       87.000                    ms
-| FixEncoderBenchmark.defaultBinaryEncodingMessage                     | thrpt  |   5  9382197.213 � 3106011.643   ops/s
-| FixEncoderBenchmark.defaultBinaryEncodingMessage:gc.alloc.rate       | thrpt  |   5     1646.204 �     544.793  MB/sec
-| FixEncoderBenchmark.defaultBinaryEncodingMessage:gc.alloc.rate.norm  | thrpt  |   5      183.999 �       0.019    B/op
-| FixEncoderBenchmark.defaultBinaryEncodingMessage:gc.count            | thrpt  |   5      599.000                counts
-| FixEncoderBenchmark.defaultBinaryEncodingMessage:gc.time             | thrpt  | 5      555.000                    ms
+Encoder (customBinaryEncodingMessage) was benchmarked against default ASCII encoding (String.getBytes(StandardCharsets.US_ASCII)).
+It has lower performance comparing to ASCII, but you get benefits of it on decoding stage. It is recommended to use Custom encoder when you encode message once but need to parse it many times (e.g internal communication within the system)
+![image](https://github.com/user-attachments/assets/4e3a7134-0384-47d1-a4d6-43682eebaef5)
 ## Parser
 Parser is more flexible than the encoder. It can parse both customly (using the encoder above)
-and ASCII encoded binary FIX messages.
+and ASCII encoded binary FIX messages. Encoding enum specifies mode and you must pass it to every call. Parser can handle messages with and without repetitive tags and you choose the function call depending on the existence of repetitive tags in your FIX message (if you are not sure, just use repetitive mode, but non-repetitve mode is more performant). You can specify tags you are interested in (recommended), or you will receive all the tags (not recommended in production mode, but can be helpful for testing/exploration). FixParser returns you a Map (more in usage) with all or interested tags and their values from a particular message. There is a possibility to supply your own HashMap with tags as keys in a function call to avoid extra allocation and reuse the existing map. If tag of interest is not present in a message, it`s value in result map will be empty.
+### Parser usage
+FixParser is a static class with no internal persistent state, it is thread-safe. **!!! If you supply your own HashMap, it's on you to ensure map's thread-safety !!!**
+```java
+//Encode a FIX message to binary using Custom encoding provided by API
+byte[] encodedMessage = FixEncoder.encodeBinary(MESSAGES[3]);
+//Encode a FIX message to binary using ASCII encoding
+byte[] encodedMessageAscii = MESSAGES[3].getBytes(StandardCharsets.US_ASCII);
+//Decode a binary FIX message without repetitive tags using Custom encoding provided by API and get a map with all fields
+Map<Integer, String> allFieldsNonRepetitive = FixParser.parseBinaryNonRepetitive(encodedMessage, Encoding.CUSTOM);
+//Decode a binary FIX message with repetitive tags using Custom encoding provided by API and get a map with all fields
+Map<Integer, List<String>> allFieldsRepetitive = FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM);
+//Decode a binary FIX message with repetitive tags using Custom encoding provided by API and get a map with specific tags
+Map<Integer, List<String>> specificTagsRepetitive = FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM, 9, 35);
+//Decode a binary FIX message without repetitive tags using ASCII encoding provided by API and get a map with specific tags
+Map<Integer, String> specificTagsNonRepetitive = FixParser.parseBinaryNonRepetitive(encodedMessageAscii, Encoding.ASCII, 9, 35);
+//Decode a binary FIX message with repetitive tags using Custom encoding provided by API with provided map of interesting tags
+HashMap<Integer, List<String>> inputMap = new HashMap<>(
+        Map.of(8, new ArrayList<>(List.of("random_val", "random_val2")),
+                35, new ArrayList<>()
+        )
+);
+//It will populate your map with the values of the tags you are interested in, old values will be erased
+FixParser.parseBinaryRepetitive(encodedMessage, Encoding.CUSTOM, inputMap);
+```
+### Parser performance
+![image](https://github.com/user-attachments/assets/f6029b08-2489-4f07-b1b6-5a9148fa3f69)
+![image](https://github.com/user-attachments/assets/b90fdd09-27c0-4a07-b4cc-6d4412808e04)
+Brief summary of this data:
+1. Custom encoding gives higher throughput than ASCII for all operations. This difference is much more notable in desired use cases of getting only fields of interest (either repetitive or non-repetitive).
+2. Providing HashMap reduces allocation twices with no significant effect on throughput, also it automatically limits tags of interest by the provided keys in a Map. This methos is strongly encourage and is perhaps the most efficient out of provided
+Getting tags using String manipulation is inefficient and leads to massive allocations and lower throughput (just for reference, not part of API)
+![image](https://github.com/user-attachments/assets/8a942f74-ce99-475c-81b6-00dcb25d6650)
+## Important considerations
+1. FixEncoder and FixParser do not currently provide any input validation on either binary or string
+2. You need to take care of using supplying correct encoding to FixParser, otherwise, unexpected results/exceptions will happen, currently there is no validation of binary message matching encoding
+   
+
+
+
+
+
 
 
