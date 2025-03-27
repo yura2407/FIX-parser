@@ -31,8 +31,12 @@ public class FixEncoder {
         byte[] buffer = new byte[byteArrayProperties.totalSize];
         final StringBuilder field = new StringBuilder();
         int offsetTags = 0;
+        // write number of bytes occupied by tags information: for each tag 4 bytes for tag number
+        // and 4 bytes for offset of it`s data
         ByteUtils.putInt(buffer, offsetTags, byteArrayProperties.numTags * 8);
         offsetTags+=4;
+        //offsetData tracks where we write data bytes including SOH character
+        //check FixEncoderTest::encodeSimpleMessage for more clarity
         int offsetData = byteArrayProperties.numTags * 8 + offsetTags;
         for (char c : message.toCharArray()) {
             switch (c) {

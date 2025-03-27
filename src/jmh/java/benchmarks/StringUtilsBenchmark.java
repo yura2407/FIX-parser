@@ -1,6 +1,5 @@
 package benchmarks;
 
-import org.fixParser.FixEncoder;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
@@ -10,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 
 @OutputTimeUnit(TimeUnit.SECONDS)
 @State(Scope.Benchmark)
-public class FixEncoderBenchmark {
+public class StringUtilsBenchmark {
 
     @State(Scope.Benchmark)
     public static class MyState {
@@ -25,20 +24,29 @@ public class FixEncoderBenchmark {
                 "8=FIX.4.2\u00019=62\u000135=5\u000134=977\u000149=TESTSELL3\u000152=20190206-16:28:51.518\u000156=TESTBUY3\u000110=092\u0001"
         };
         private final Random random = new Random();
-        public String getMessage() {
-            return MESSAGES[random.nextInt(MESSAGES.length)];
+        private final byte[][] defaultBinaryMessagePool = new byte[MESSAGES.length][];
+
+        @Setup
+        public void setup() {
+            for (int i = 0; i < MESSAGES.length; i++) {
+                defaultBinaryMessagePool[i] = MESSAGES[i].getBytes(StandardCharsets.US_ASCII);
+            }
+        }
+        public byte[] getBinaryMessage() {
+            return defaultBinaryMessagePool[random.nextInt(MESSAGES.length)];
         }
     }
-
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void customBinaryEncodingMessage(MyState state) {
-        FixEncoder.encodeBinary(state.getMessage());
+    public void decodeOneMessageWithAllFieldsNonRepetitiveUsingStringOperation(MyState state, Blackhole blackhole) {
+        String message = new String(state.getBinaryMessage(), StandardCharsets.US_ASCII);
+        blackhole.consume(StringUtils.parseFixMessageNonRepetitive(message));
     }
 
     @BenchmarkMode(Mode.Throughput)
     @Benchmark
-    public void defaultBinaryEncodingMessage(MyState state, Blackhole blackhole) {
-        blackhole.consume(state.getMessage().getBytes(StandardCharsets.US_ASCII));
+    public void decodeOneMessageWithAllFieldsRepetitiveUsingStringOperation(MyState state, Blackhole blackhole) {
+        String message = new String(state.getBinaryMessage(), StandardCharsets.US_ASCII);
+        blackhole.consume(StringUtils.parseFixMessageRepetitive(message));
     }
 }

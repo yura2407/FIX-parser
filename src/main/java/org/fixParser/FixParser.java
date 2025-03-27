@@ -14,7 +14,6 @@ interface MapUpdater<K, V> {
 
 public class FixParser {
 
-    //TODO can we figure out repetitive tags from the message?
     private static final MapUpdater<Integer, String> NON_REPETITIVE_MAP_UPDATER = (map, key, value, tagsLeft) -> {
         map.put(key, value);
         return tagsLeft - 1;
@@ -23,6 +22,20 @@ public class FixParser {
         map.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
         return tagsLeft;
     };
+
+    public static void parseBinaryNonRepetitive(byte[] message, Encoding encoding, HashMap<Integer, String> map) {
+        for (Map.Entry<Integer, String> entry : map.entrySet()) {
+            entry.setValue("");
+        }
+        readBinaryArray(message, false, map, NON_REPETITIVE_MAP_UPDATER, encoding);
+    }
+
+    public static void parseBinaryRepetitive(byte[] message, Encoding encoding, HashMap<Integer, List<String>> map) {
+        for (Map.Entry<Integer, List<String>> entry : map.entrySet()) {
+            entry.getValue().clear();
+        }
+        readBinaryArray(message, false, map, REPETITIVE_MAP_UPDATER, encoding);
+    }
 
     public static HashMap<Integer, String> parseBinaryNonRepetitive(byte[] message, Encoding encoding, int... tags) {
         HashMap<Integer, String> map = new HashMap<>();
